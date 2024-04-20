@@ -10,6 +10,21 @@ public class RR extends AlgoritmoPlanificacion {
         this.quantum = quantum;
     }
 
+    // copia del estado original de los procesos
+    private Proceso[] copiaProcesos(Proceso[] procesosOriginales) {
+        Proceso[] copia = new Proceso[procesosOriginales.length];
+        for (int i = 0; i < procesosOriginales.length; i++) {
+            copia[i] = new Proceso(
+                    procesosOriginales[i].nombre,
+                    procesosOriginales[i].tiempoLlegada,
+                    procesosOriginales[i].rafagasRestantes,
+                    procesosOriginales[i].prioridad);
+        }
+        return copia;
+    }
+
+    Proceso[] procesosOriginales = copiaProcesos(procesos);
+
     @Override
     public void ejecutar() {
         Queue<Proceso> colaListos = new LinkedList<>();
@@ -20,7 +35,7 @@ public class RR extends AlgoritmoPlanificacion {
 
             // Agregar procesos a la cola de listos que han llegado
             for (Proceso proceso : procesos) {
-                if (!proceso.terminado && proceso.tiempoLlegada <= tiempoActual) {
+                if (!proceso.terminado && proceso.tiempoLlegada <= tiempoActual && !colaListos.contains(proceso)) {
                     colaListos.add(proceso);
                     todosTerminados = false;
                 }
@@ -45,14 +60,20 @@ public class RR extends AlgoritmoPlanificacion {
                     colaListos.add(procesoActual);
                 } else {
                     procesoActual.tiempoFinalizacion = tiempoActual;
+                    // actualizar el tiempo de finalización del proceso original
+                    for (Proceso proceso : procesosOriginales) {
+                        if (proceso.nombre.equals(procesoActual.nombre)) {
+                            proceso.tiempoFinalizacion = tiempoActual;
+                        }
+                    }
                     procesoActual.terminado = true;
                 }
             } else {
                 // No hay procesos listos, avanzar en el tiempo
-                tiempoActual++; 
+                tiempoActual++;
             }
         }
-         // Actualizamos el tiempo final de la ejecución
+        // Actualizamos el tiempo final de la ejecución
         tiempoFinalizacion = tiempoActual;
     }
 
@@ -68,8 +89,11 @@ public class RR extends AlgoritmoPlanificacion {
     @Override
     public double calcularTiempoEsperaPromedio() {
         double tiempoEsperaPromedio = 0;
-        for (Proceso proceso : procesos) {
+        for (Proceso proceso : procesosOriginales) {
             tiempoEsperaPromedio += proceso.tiempoFinalizacion - proceso.tiempoLlegada - proceso.rafagasRestantes;
+            System.out.println(
+                    proceso.tiempoFinalizacion + " - " + proceso.tiempoLlegada + " - " + proceso.rafagasRestantes
+                            + " = " + (proceso.tiempoFinalizacion - proceso.tiempoLlegada - proceso.rafagasRestantes));
         }
         return tiempoEsperaPromedio / numeroProcesos;
     }

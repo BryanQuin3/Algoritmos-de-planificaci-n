@@ -1,5 +1,3 @@
-import java.util.Arrays;
-import java.util.Comparator;
 
 public class SJF extends AlgoritmoPlanificacion {
 
@@ -9,20 +7,25 @@ public class SJF extends AlgoritmoPlanificacion {
 
     @Override
     public void ejecutar() {
-        // Ordenar los procesos por su tiempo de ráfaga restante (SJF sin desalojo)
-        Arrays.sort(procesos, Comparator.comparingInt(p -> p.rafagasRestantes));
-        
-        // Ejecutar los procesos en el orden ordenado
         int tiempoActual = 0;
-        for (int i = 0; i < numeroProcesos; i++) {
-            Proceso proceso = procesos[i];
-            if (tiempoActual < proceso.tiempoLlegada) {
-                tiempoActual = proceso.tiempoLlegada;
+        int procesosCompletados = 0;
+        while (procesosCompletados < numeroProcesos) {
+            Proceso procesoAEjecutar = null;
+            for (Proceso proceso : procesos) {
+                if (!proceso.terminado && proceso.tiempoLlegada <= tiempoActual
+                        && (procesoAEjecutar == null || proceso.rafagasRestantes < procesoAEjecutar.rafagasRestantes)) {
+                    procesoAEjecutar = proceso;
+                }
             }
-            tiempoActual += proceso.rafagasRestantes;
-            proceso.tiempoFinalizacion = tiempoActual;
+            if (procesoAEjecutar != null) {
+                tiempoActual += procesoAEjecutar.rafagasRestantes;
+                procesoAEjecutar.tiempoFinalizacion = tiempoActual;
+                procesoAEjecutar.terminado = true;
+                procesosCompletados++;
+            } else {
+                tiempoActual++;
+            }
         }
-        // Actualizar el tiempo final de ejecución
         tiempoFinalizacion = tiempoActual;
     }
 
@@ -39,7 +42,8 @@ public class SJF extends AlgoritmoPlanificacion {
     public double calcularTiempoEsperaPromedio() {
         double tiempoEsperaPromedio = 0;
         for (int i = 0; i < numeroProcesos; i++) {
-            tiempoEsperaPromedio += procesos[i].tiempoFinalizacion - procesos[i].tiempoLlegada - procesos[i].rafagasRestantes;
+            tiempoEsperaPromedio += procesos[i].tiempoFinalizacion - procesos[i].tiempoLlegada
+                    - procesos[i].rafagasRestantes;
         }
         return tiempoEsperaPromedio / numeroProcesos;
     }

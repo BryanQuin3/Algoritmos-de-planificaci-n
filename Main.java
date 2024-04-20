@@ -6,11 +6,13 @@ public class Main {
 
         // Crear procesos de ejemplo
         Proceso[] procesosOriginales = {
-            new Proceso("P1", 0, 8, 3),
-            new Proceso("P2", 1, 4, 1),
-            new Proceso("P3", 2, 9, 2),
-            new Proceso("P4", 3, 5, 4),
-            new Proceso("P5", 5, 2, 5)
+            new Proceso("P1", 0, 3, 1),
+            new Proceso("P2", 1, 4, 5),
+            new Proceso("P3", 2, 5, 6),
+            new Proceso("P4", 3, 2, 2),
+            new Proceso("P5", 4, 6, 7),
+            new Proceso("P6", 4, 3, 3),
+            new Proceso("P7", 4, 3, 4),
         };
 
         // Menú
