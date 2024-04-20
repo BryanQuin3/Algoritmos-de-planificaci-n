@@ -1,17 +1,10 @@
-import java.util.Comparator;
-import java.util.PriorityQueue;
-
 public class SJFConDesalojo extends AlgoritmoPlanificacion {
-
-    private PriorityQueue<Proceso> colaListos;
 
     public SJFConDesalojo(Proceso[] procesos) {
         super(procesos);
-        colaListos = new PriorityQueue<>(Comparator.comparingInt(p -> p.rafagasRestantes));
     }
 
-    // copia del estado original de los procesos
-    private Proceso[] copiaProcesos(Proceso[] procesosOriginales) {
+    private static Proceso[] copiarProcesos(Proceso[] procesosOriginales) {
         Proceso[] copia = new Proceso[procesosOriginales.length];
         for (int i = 0; i < procesosOriginales.length; i++) {
             copia[i] = new Proceso(
@@ -23,67 +16,51 @@ public class SJFConDesalojo extends AlgoritmoPlanificacion {
         return copia;
     }
 
-    Proceso[] procesosOriginales = copiaProcesos(procesos);
+    Proceso[] procesosOriginales = copiarProcesos(procesos);
 
     @Override
     public void ejecutar() {
         int tiempoActual = 0;
-        int procesosTerminados = 0;
         Proceso procesoActual = null;
-
-        while (procesosTerminados < numeroProcesos) {
-            // Variable para controlar si se ejecutó algún proceso en esta iteración
-            boolean ejecutado = false;
-
-            // Agregar los procesos que han llegado a la cola de listos
-            for (int i = 0; i < numeroProcesos; i++) {
-                if (procesos[i].tiempoLlegada <= tiempoActual && procesos[i].rafagasRestantes > 0) {
-                    colaListos.add(procesos[i]);
+        while (true) {
+            boolean todosTerminados = true;
+            for (Proceso proceso : procesos) {
+                if (!proceso.terminado) {
+                    todosTerminados = false;
+                    if (proceso.tiempoLlegada <= tiempoActual
+                            && (procesoActual == null || proceso.rafagasRestantes < procesoActual.rafagasRestantes)) {
+                        procesoActual = proceso;
+                    }
                 }
             }
-            // Si hay procesos en la cola de listos
-            if (!colaListos.isEmpty()) {
-                // Obtener el próximo proceso con la ráfaga más corta
-                Proceso proximoProceso = colaListos.poll();
-                if (procesoActual != null && procesoActual != proximoProceso && procesoActual.rafagasRestantes > 0) {
-                    // Desalojo
-                    colaListos.add(procesoActual);
-                }
-                procesoActual = proximoProceso;
+            if (todosTerminados) {
+                break;
+            }
+            if (procesoActual != null) {
                 procesoActual.rafagasRestantes--;
-                // Ejecutar una ráfaga del proceso actual
-                ejecutado = true;
-                // Verificar si el proceso ha terminado
                 if (procesoActual.rafagasRestantes == 0) {
-                    procesoActual.tiempoFinalizacion = tiempoActual;
-                    // actualizar el tiempo de finalización del proceso original
+                    procesoActual.tiempoFinalizacion = tiempoActual + 1;
+                    procesoActual.terminado = true;
+                    // actualizar proceso original
                     for (Proceso proceso : procesosOriginales) {
                         if (proceso.nombre.equals(procesoActual.nombre)) {
-                            proceso.tiempoFinalizacion = tiempoActual;
+                            proceso.tiempoFinalizacion = procesoActual.tiempoFinalizacion;
+                            proceso.terminado = true;
                         }
                     }
-                    procesosTerminados++;
-
-                    System.out.println(procesosTerminados + ". " + procesoActual.nombre + " terminado en el tiempo "
-                            + tiempoActual);
+                    procesoActual = null;
                 }
-            }
-
-            // Incrementar el tiempo de espera para los procesos en la cola de listos
-            for (Proceso p : colaListos) {
-                p.tiempoEspera++;
             }
             tiempoActual++;
         }
-        // actualizar el tiempo final de ejecución
         tiempoFinalizacion = tiempoActual;
     }
 
     @Override
     public double calcularTiempoEjecucionPromedio() {
         double tiempoEjecucionPromedio = 0;
-        for (Proceso proceso : procesosOriginales) {
-            tiempoEjecucionPromedio += proceso.tiempoFinalizacion - proceso.tiempoLlegada + 1;
+        for (int i = 0; i < numeroProcesos; i++) {
+            tiempoEjecucionPromedio += procesos[i].tiempoFinalizacion - procesos[i].tiempoLlegada;
         }
         return tiempoEjecucionPromedio / numeroProcesos;
     }
@@ -96,5 +73,4 @@ public class SJFConDesalojo extends AlgoritmoPlanificacion {
         }
         return tiempoEsperaPromedio / numeroProcesos;
     }
-
 }
